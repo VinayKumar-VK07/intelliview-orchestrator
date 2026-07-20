@@ -1,0 +1,226 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: ai-interview-redis
+    ports:
+      - "6379:6379"
+    command:
+      - redis-server
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-interview-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  postgres:
+    image: postgres:15
+    container_name: ai-interview-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ai_interview_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai-interview-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-interview-fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ai_interview_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      API_TOKEN: "${API_TOKEN:-dev-token-change-me}"
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-*}"
+      ENABLE_PROMETHEUS: "${ENABLE_PROMETHEUS:-true}"
+      AUDIT_LOG_FILE: "${AUDIT_LOG_FILE:-}"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    networks:
+      - ai-interview-network
+    command: uvicorn orchestrator.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-interview-worker
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ai_interview_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      API_URL: "http://fastapi:8000"
+      API_TOKEN: "${API_TOKEN:-dev-token-change-me}"
+      WORKER_CONCURRENCY: "${WORKER_CONCURRENCY:-4}"
+      WORKER_ID: "${WORKER_ID:-worker-1}"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      fastapi:
+        condition: service_started
+    volumes:
+      - .:/app
+    networks:
+      - ai-interview-network
+    command: python -m workers.worker_entrypoint
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "4.0"
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-interview-flower
+    ports:
+      - "5555:5555"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      API_TOKEN: "${API_TOKEN:-dev-token-change-me}"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-interview-network
+    command: celery -A workers.celery_app.celery_app flower --url_prefix=flower
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5555/flower"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-interview-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - ai-interview-network
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-interview-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - ai-interview-network
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+volumes:
+  redis_data:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  ai-interview-network:
+    driver: bridge
