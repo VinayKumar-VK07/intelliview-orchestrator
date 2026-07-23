@@ -17,7 +17,6 @@ function Dialog({ open, onOpenChange, children }) {
   const previousActiveRef = useRef(null);
 
   const reduceMotion = useReducedMotion();
-
   const dialogTitleId = useId();
 
   useEffect(() => {
@@ -27,15 +26,17 @@ function Dialog({ open, onOpenChange, children }) {
 
     document.body.style.overflow = "hidden";
 
-    const focusables =
-      containerRef.current?.querySelectorAll(FOCUSABLE_SELECTOR);
+    requestAnimationFrame(() => {
+      const focusables =
+        containerRef.current?.querySelectorAll(FOCUSABLE_SELECTOR);
 
-    const firstFocusable =
-      focusables && focusables.length > 0
-        ? focusables[0]
-        : containerRef.current;
+      const firstFocusable =
+        focusables && focusables.length > 0
+          ? focusables[0]
+          : containerRef.current;
 
-    firstFocusable?.focus();
+      firstFocusable?.focus();
+    });
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -47,7 +48,9 @@ function Dialog({ open, onOpenChange, children }) {
       if (e.key !== "Tab") return;
 
       const elements = Array.from(
-        containerRef.current.querySelectorAll(FOCUSABLE_SELECTOR)
+        containerRef.current.querySelectorAll(
+          FOCUSABLE_SELECTOR
+        )
       ).filter((el) => !el.hasAttribute("disabled"));
 
       if (elements.length === 0) {
@@ -67,7 +70,10 @@ function Dialog({ open, onOpenChange, children }) {
           last.focus();
         }
       } else {
-        if (document.activeElement === last) {
+        if (
+          document.activeElement === last ||
+          !containerRef.current.contains(document.activeElement)
+        ) {
           e.preventDefault();
           first.focus();
         }
@@ -98,14 +104,18 @@ function Dialog({ open, onOpenChange, children }) {
           animate={{ opacity: 1 }}
           exit={reduceMotion ? undefined : { opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 pt-[12vh] backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 pt-[12vh] backdrop-blur-sm outline-none"
           onClick={() => onOpenChange(false)}
         >
           <motion.div
             initial={
               reduceMotion
                 ? false
-                : { opacity: 0, y: -20, scale: 0.96 }
+                : {
+                    opacity: 0,
+                    y: -20,
+                    scale: 0.96,
+                  }
             }
             animate={{
               opacity: 1,
@@ -115,7 +125,11 @@ function Dialog({ open, onOpenChange, children }) {
             exit={
               reduceMotion
                 ? undefined
-                : { opacity: 0, y: -20, scale: 0.96 }
+                : {
+                    opacity: 0,
+                    y: -20,
+                    scale: 0.96,
+                  }
             }
             transition={{
               type: "spring",
@@ -124,7 +138,7 @@ function Dialog({ open, onOpenChange, children }) {
             }}
             className="w-full"
             onClick={(e) => e.stopPropagation()}
-          >
+        >
             {typeof children === "function"
               ? children(dialogTitleId)
               : children}
@@ -144,6 +158,7 @@ function DialogContent({
     <div
       className={cn(
         "relative rounded-xl border border-border bg-bg-panel shadow-2xl",
+        "focus-visible:ring-2 focus-visible:ring-accent",
         className
       )}
     >
@@ -152,9 +167,13 @@ function DialogContent({
           type="button"
           onClick={onClose}
           aria-label="Close dialog"
-          className="absolute right-3 top-3 z-10 rounded-md p-2 text-zinc-300 hover:bg-bg-card hover:text-white focus:outline-none focus:ring-2 focus:ring-accent"
+          title="Close dialog"
+          className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-md border border-transparent text-zinc-300 transition-colors hover:bg-bg-card hover:text-white focus-visible:ring-2 focus-visible:ring-accent"
         >
-          <X size={16} aria-hidden="true" />
+          <X
+            size={18}
+            aria-hidden="true"
+          />
         </button>
       )}
 

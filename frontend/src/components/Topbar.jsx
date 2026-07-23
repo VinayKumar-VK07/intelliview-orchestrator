@@ -15,7 +15,6 @@ import {
   Radio,
   Lock,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/ui-store";
 import { Tooltip } from "@/components/Tooltip";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -57,18 +56,19 @@ function Topbar() {
   return (
     <header
       role="banner"
+      aria-label="Application header"
       className="flex h-14 items-center justify-between border-b border-border bg-bg-panel px-4 md:px-5"
     >
-      {/* Left Side */}
+      {/* Left Section */}
       <div className="flex items-center gap-3">
 
-        {/* Mobile Menu */}
+        {/* Mobile Navigation Button */}
         <button
           type="button"
           onClick={() => setMobile(true)}
           aria-label="Open navigation menu"
           aria-controls="mobile-sidebar"
-          className="rounded-md p-2 text-zinc-300 hover:bg-bg-card hover:text-white focus:outline-none focus:ring-2 focus:ring-accent md:hidden"
+          className="inline-flex items-center justify-center rounded-md border border-transparent p-2 text-zinc-300 transition-colors duration-200 hover:bg-bg hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel md:hidden"
         >
           <Menu size={18} aria-hidden="true" />
         </button>
@@ -80,7 +80,7 @@ function Topbar() {
             window.dispatchEvent(new CustomEvent("open-command-palette"))
           }
           aria-label="Open search"
-          className="flex items-center gap-2 rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-300 hover:border-accent hover:text-white focus:outline-none focus:ring-2 focus:ring-accent"
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-300 transition-colors duration-200 hover:border-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
         >
           <Search size={14} aria-hidden="true" />
 
@@ -97,10 +97,8 @@ function Topbar() {
         </button>
       </div>
 
-      {/* Right Side */}
-      <div className="flex items-center gap-2">
-
-        {/* Connection Status */}
+      {/* Right Section */}
+      <div className="flex items-center gap-2">        {/* Connection Status */}
         <Tooltip
           content={
             connected
@@ -111,7 +109,12 @@ function Topbar() {
           <div
             role="status"
             aria-live="polite"
-            className="flex items-center gap-2 rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-300"
+            aria-label={
+              connected
+                ? "Connected to live updates"
+                : "Disconnected from live updates"
+            }
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-300"
           >
             <Radio
               size={12}
@@ -126,8 +129,8 @@ function Topbar() {
             <span
               className={
                 connected
-                  ? "text-green-400"
-                  : "text-red-400"
+                  ? "font-medium text-green-400"
+                  : "font-medium text-red-400"
               }
             >
               {connected ? "Live" : "Offline"}
@@ -135,19 +138,20 @@ function Topbar() {
           </div>
         </Tooltip>
 
-        {/* Theme Button */}
-        <Tooltip content={`Theme : ${themeLabel}`}>
+        {/* Theme Toggle */}
+        <Tooltip content={`Theme: ${themeLabel}`}>
           <button
             type="button"
             onClick={cycleTheme}
             aria-label={`Current theme ${themeLabel}. Change theme`}
-            className="rounded-md border border-border bg-bg-card p-2 text-zinc-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent"
+            title={`Current theme: ${themeLabel}`}
+            className="inline-flex items-center justify-center rounded-md border border-border bg-bg-card p-2 text-zinc-300 transition-colors duration-200 hover:bg-bg hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
           >
             <ThemeIcon size={15} aria-hidden="true" />
           </button>
         </Tooltip>
 
-        {/* Keyboard Help */}
+        {/* Keyboard Shortcuts */}
         <Tooltip content="Keyboard shortcuts">
           <button
             type="button"
@@ -156,18 +160,20 @@ function Topbar() {
                 new CustomEvent("open-shortcuts-help")
               )
             }
-            aria-label="Show keyboard shortcuts"
-            className="rounded-md border border-border bg-bg-card p-2 text-zinc-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent"
+            aria-label="Open keyboard shortcuts"
+            title="Keyboard shortcuts"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-bg-card p-2 text-zinc-300 transition-colors duration-200 hover:bg-bg hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
           >
             <Keyboard size={15} aria-hidden="true" />
           </button>
         </Tooltip>
 
-        {/* Lock */}
+        {/* Lock Screen */}
         <Tooltip content="Lock screen">
           <button
             type="button"
-            aria-label="Lock screen"
+            aria-label="Lock application"
+            title="Lock screen"
             onClick={() => {
               localStorage.setItem(
                 "intelliview_screen_lock",
@@ -175,13 +181,11 @@ function Topbar() {
               );
               window.location.reload();
             }}
-            className="rounded-md border border-border bg-bg-card p-2 text-zinc-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-bg-card p-2 text-zinc-300 transition-colors duration-200 hover:bg-bg hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
           >
             <Lock size={15} aria-hidden="true" />
           </button>
-        </Tooltip>
-
-        {/* API Token Form */}
+        </Tooltip>        {/* API Token */}
         {showForm ? (
           <form
             onSubmit={(e) => {
@@ -190,6 +194,7 @@ function Topbar() {
               setShowForm(false);
             }}
             className="flex items-center gap-2"
+            aria-label="API token form"
           >
             <label htmlFor="api-token" className="sr-only">
               API Token
@@ -201,13 +206,15 @@ function Topbar() {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="API Token"
+              autoComplete="off"
               aria-label="API Token"
-              className="rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
+              className="rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
             />
 
             <button
               type="submit"
-              className="rounded-md bg-accent px-3 py-2 text-xs font-medium text-white hover:bg-accent-dark focus:outline-none focus:ring-2 focus:ring-accent"
+              aria-label="Save API Token"
+              className="inline-flex items-center justify-center rounded-md bg-accent px-3 py-2 text-xs font-medium text-white transition-colors duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
             >
               Save
             </button>
@@ -215,7 +222,8 @@ function Topbar() {
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-300 hover:bg-bg-panel focus:outline-none focus:ring-2 focus:ring-accent"
+              aria-label="Cancel API Token"
+              className="inline-flex items-center justify-center rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-300 transition-colors duration-200 hover:bg-bg hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
             >
               Cancel
             </button>
@@ -225,7 +233,7 @@ function Topbar() {
             type="button"
             onClick={() => setToken(null)}
             aria-label="Sign out"
-            className="flex items-center gap-2 rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-300 hover:border-red-500 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-bg-card px-3 py-2 text-xs text-zinc-300 transition-colors duration-200 hover:border-red-500 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
           >
             <LogOut size={14} aria-hidden="true" />
 
@@ -238,7 +246,7 @@ function Topbar() {
             type="button"
             onClick={() => setShowForm(true)}
             aria-label="Set API Token"
-            className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-xs font-medium text-white hover:bg-accent-dark focus:outline-none focus:ring-2 focus:ring-accent"
+            className="inline-flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-xs font-medium text-white transition-colors duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-panel"
           >
             <LogIn size={14} aria-hidden="true" />
 

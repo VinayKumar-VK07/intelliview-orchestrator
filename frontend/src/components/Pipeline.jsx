@@ -100,6 +100,7 @@ function Pipeline({ current, className }) {
             key={stage.status}
             className="flex items-center gap-1.5"
             role="listitem"
+            aria-current={active ? "step" : undefined}
           >
             <div
               role="img"

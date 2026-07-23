@@ -11,8 +11,17 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "AI-Intelliview Orchestrator",
-  description: "Distributed AI-powered interview orchestration dashboard",
+  title: {
+    default: "AI-Intelliview Orchestrator",
+    template: "%s | AI-Intelliview Orchestrator",
+  },
+  description:
+    "Distributed AI-powered interview orchestration dashboard",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }) {
@@ -25,7 +34,6 @@ export default function RootLayout({ children }) {
       <body
         className={`${inter.variable} font-sans antialiased bg-bg text-white`}
       >
-        {/* Skip Navigation */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[9999] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:no-underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-bg"
@@ -35,7 +43,6 @@ export default function RootLayout({ children }) {
 
         <ClientProviders>
           <div className="flex min-h-screen bg-bg">
-            {/* Sidebar Navigation */}
             <aside
               aria-label="Primary navigation"
               className="shrink-0"
@@ -44,7 +51,6 @@ export default function RootLayout({ children }) {
             </aside>
 
             <div className="flex min-w-0 flex-1 flex-col">
-              {/* Top Header */}
               <header
                 role="banner"
                 aria-label="Application header"
@@ -52,7 +58,6 @@ export default function RootLayout({ children }) {
                 <Topbar />
               </header>
 
-              {/* Main Content */}
               <main
                 id="main-content"
                 role="main"

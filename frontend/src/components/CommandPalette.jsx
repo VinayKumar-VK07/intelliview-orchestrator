@@ -1,4 +1,5 @@
 "use client";
+
 import { Command } from "cmdk";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,42 +17,56 @@ import {
   Video,
   UserCircle,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/Dialog";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/Dialog";
 
 const NAV_ITEMS = [
-  { id: "nav:overview", label: "Overview", icon: LayoutDashboard, action: "/", group: "Navigate" },
-  { id: "nav:interview", label: "Interview", icon: Video, action: "/interview", group: "Navigate" },
-  { id: "nav:sessions", label: "Sessions", icon: Activity, action: "/sessions", group: "Navigate" },
-  { id: "nav:candidates", label: "Candidates", icon: UserCircle, action: "/candidates", group: "Navigate" },
-  { id: "nav:workers", label: "Workers", icon: Users, action: "/workers", group: "Navigate" },
-  { id: "nav:analytics", label: "Analytics", icon: BarChart3, action: "/analytics", group: "Navigate" },
-  { id: "nav:settings", label: "Settings", icon: Settings, action: "/settings", group: "Navigate" },
+  { id: "nav:overview", label: "Overview", icon: LayoutDashboard, action: "/" },
+  { id: "nav:interview", label: "Interview", icon: Video, action: "/interview" },
+  { id: "nav:sessions", label: "Sessions", icon: Activity, action: "/sessions" },
+  { id: "nav:candidates", label: "Candidates", icon: UserCircle, action: "/candidates" },
+  { id: "nav:workers", label: "Workers", icon: Users, action: "/workers" },
+  { id: "nav:analytics", label: "Analytics", icon: BarChart3, action: "/analytics" },
+  { id: "nav:settings", label: "Settings", icon: Settings, action: "/settings" },
 ];
 
 const ACTIONS = [
-  { id: "act:start", label: "Start new interview", icon: Play, action: "start", group: "Actions" },
-  { id: "act:live-interview", label: "Start live interview", icon: Video, action: "live-interview", group: "Actions" },
-  { id: "act:refresh", label: "Refresh all data", icon: RefreshCcw, action: "refresh", group: "Actions" },
-  { id: "act:detect", label: "Run failure detection", icon: Zap, action: "detect", group: "Actions" },
-  { id: "act:clear-cache", label: "Clear session cache", icon: Trash2, action: "clear-cache", group: "Actions" },
+  { id: "act:start", label: "Start new interview", icon: Play, action: "start" },
+  { id: "act:live", label: "Start live interview", icon: Video, action: "live-interview" },
+  { id: "act:refresh", label: "Refresh all data", icon: RefreshCcw, action: "refresh" },
+  { id: "act:detect", label: "Run failure detection", icon: Zap, action: "detect" },
+  { id: "act:clear", label: "Clear session cache", icon: Trash2, action: "clear-cache" },
 ];
 
-export function CommandPalette({ open, onOpenChange, onAction }) {
+export function CommandPalette({
+  open,
+  onOpenChange,
+  onAction,
+}) {
   const router = useRouter();
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (!open) setSearch("");
+    if (!open) {
+      setSearch("");
+    }
   }, [open]);
 
   function handleSelect(id) {
     const nav = NAV_ITEMS.find((n) => n.id === id);
+
     if (nav) {
       router.push(nav.action);
       onOpenChange(false);
       return;
     }
+
     const act = ACTIONS.find((a) => a.id === id);
+
     if (act) {
       onAction?.(act.action);
       onOpenChange(false);
@@ -59,40 +74,73 @@ export function CommandPalette({ open, onOpenChange, onAction }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       <DialogContent className="max-w-xl overflow-hidden p-0">
-        <DialogTitle className="sr-only">Command palette</DialogTitle>
-        <Command label="Command palette" className="bg-bg-panel">
+        <DialogTitle className="sr-only">
+          Command Palette
+        </DialogTitle>
+
+        <Command
+          label="Command Palette"
+          className="bg-bg-panel"
+        >
+          {/* Search */}
+
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <Search size={16} className="text-muted" />
+            <Search
+              size={16}
+              aria-hidden="true"
+              className="text-zinc-400"
+            />
+
             <Command.Input
               value={search}
               onValueChange={setSearch}
-              placeholder="Type a command or search…"
-              className="flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-muted focus:outline-none"
+              placeholder="Type a command or search..."
+              aria-label="Search commands"
+              autoComplete="off"
+              spellCheck={false}
+              className="flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none"
             />
-            <kbd className="rounded border border-border bg-bg-card px-1.5 py-0.5 text-[10px] text-muted">
+
+            <kbd
+              aria-hidden="true"
+              className="rounded border border-border bg-bg-card px-1.5 py-0.5 text-[10px] text-zinc-400"
+            >
               ESC
             </kbd>
           </div>
 
-          <Command.List className="max-h-80 overflow-y-auto p-2">
-            <Command.Empty className="px-3 py-6 text-center text-sm text-muted">
+          {/* Results */}
+
+          <Command.List
+            className="max-h-80 overflow-y-auto p-2"
+            aria-label="Command results"
+          >
+            <Command.Empty className="px-3 py-6 text-center text-sm text-zinc-400">
               No results found.
             </Command.Empty>
 
             <Command.Group
               heading="Navigate"
-              className="text-xs uppercase tracking-wide text-muted"
+              className="text-xs uppercase tracking-wide text-zinc-400"
             >
               {NAV_ITEMS.map((item) => (
                 <Command.Item
                   key={item.id}
                   value={item.label}
                   onSelect={() => handleSelect(item.id)}
-                  className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-200 aria-selected:bg-accent/15 aria-selected:text-accent-light"
+                  aria-label={item.label}
+                  className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-200 transition-colors aria-selected:bg-accent aria-selected:text-white focus-visible:ring-2 focus-visible:ring-accent"
                 >
-                  <item.icon size={16} />
+                  <item.icon
+                    size={16}
+                    aria-hidden="true"
+                  />
+
                   <span>{item.label}</span>
                 </Command.Item>
               ))}
@@ -102,35 +150,48 @@ export function CommandPalette({ open, onOpenChange, onAction }) {
 
             <Command.Group
               heading="Actions"
-              className="text-xs uppercase tracking-wide text-muted"
+              className="text-xs uppercase tracking-wide text-zinc-400"
             >
               {ACTIONS.map((item) => (
                 <Command.Item
                   key={item.id}
                   value={item.label}
                   onSelect={() => handleSelect(item.id)}
-                  className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-200 aria-selected:bg-accent/15 aria-selected:text-accent-light"
+                  aria-label={item.label}
+                  className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-200 transition-colors aria-selected:bg-accent aria-selected:text-white focus-visible:ring-2 focus-visible:ring-accent"
                 >
-                  <item.icon size={16} />
+                  <item.icon
+                    size={16}
+                    aria-hidden="true"
+                  />
+
                   <span>{item.label}</span>
                 </Command.Item>
               ))}
             </Command.Group>
           </Command.List>
 
-          <div className="flex items-center justify-between border-t border-border bg-bg-card/50 px-4 py-2 text-[10px] text-muted">
+          {/* Footer */}
+
+          <footer className="flex items-center justify-between border-t border-border bg-bg-card/60 px-4 py-2 text-[10px] text-zinc-400">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
-                <kbd className="rounded border border-border bg-bg-card px-1">↑↓</kbd>
+                <kbd className="rounded border border-border bg-bg-card px-1">
+                  ↑↓
+                </kbd>
                 navigate
               </span>
+
               <span className="flex items-center gap-1">
-                <kbd className="rounded border border-border bg-bg-card px-1">↵</kbd>
+                <kbd className="rounded border border-border bg-bg-card px-1">
+                  ↵
+                </kbd>
                 select
               </span>
             </div>
+
             <span>Powered by cmdk</span>
-          </div>
+          </footer>
         </Command>
       </DialogContent>
     </Dialog>

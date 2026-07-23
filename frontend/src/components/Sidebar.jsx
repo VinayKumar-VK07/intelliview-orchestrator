@@ -35,11 +35,13 @@ export function Sidebar({ mobile = false, onNavigate }) {
 
     switch (e.key) {
       case "ArrowDown":
+      case "ArrowRight":
         e.preventDefault();
         navRef.current[(index + 1) % total]?.focus();
         break;
 
       case "ArrowUp":
+      case "ArrowLeft":
         e.preventDefault();
         navRef.current[(index - 1 + total) % total]?.focus();
         break;
@@ -61,6 +63,7 @@ export function Sidebar({ mobile = false, onNavigate }) {
 
   return (
     <aside
+      tabIndex={-1}
       className={cn(
         mobile
           ? "flex w-full flex-col"
@@ -101,8 +104,7 @@ export function Sidebar({ mobile = false, onNavigate }) {
         role="navigation"
         aria-labelledby="sidebar-title"
         className="flex-1 space-y-1 p-3"
-      >
-        {items.map((item, index) => {
+      >        {items.map((item, index) => {
           const active =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
@@ -148,7 +150,8 @@ export function Sidebar({ mobile = false, onNavigate }) {
         aria-label="Application information"
         className="border-t border-border p-4 text-[11px] text-zinc-400"
       >
-        v0.2.0 · © Mukta Redij
+        <p>v0.2.0</p>
+        <p>© Mukta Redij</p>
       </footer>
     </aside>
   );
